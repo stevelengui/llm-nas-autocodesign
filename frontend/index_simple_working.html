@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LLM-NAS WORKING</title>
+    <style>
+        body { font-family: Arial; padding: 40px; max-width: 800px; margin: 0 auto; }
+        .btn { background: #4CAF50; color: white; padding: 15px 30px; border: none; cursor: pointer; font-size: 16px; margin: 10px; }
+        .progress { width: 100%; height: 30px; background: #f0f0f0; margin: 20px 0; }
+        .bar { height: 100%; background: #4CAF50; width: 0%; transition: width 0.3s; }
+        .log { background: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin: 10px 0; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🚀 LLM-NAS AutoCoDesign</h1>
+    <h2>✅ WORKING VERSION</h2>
+    
+    <div class="progress">
+        <div class="bar" id="progressBar"></div>
+    </div>
+    <div id="progressText" style="text-align: center; margin: 10px;">Ready</div>
+    
+    <button class="btn" onclick="testHealth()">Test API Health</button>
+    <button class="btn" onclick="generateSimple()">Generate Simple Project</button>
+    <button class="btn" onclick="generateStrict()" style="background: #2196F3;">Generate STRICT Project</button>
+    
+    <div id="log" class="log"></div>
+    <div id="result"></div>
+    
+    <script>
+        const log = document.getElementById('log');
+        const result = document.getElementById('result');
+        
+        function addLog(msg, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'blue';
+            log.innerHTML += `<div style="color:${color}">[${time}] ${msg}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function updateProgress(percent, text) {
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('progressText').textContent = text;
+        }
+        
+        async function testHealth() {
+            try {
+                addLog('Testing API health...');
+                const response = await fetch('http://localhost:5000/api/health');
+                const data = await response.json();
+                addLog(`✅ API Healthy: ${data.status}`, 'success');
+                result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                addLog(`❌ API Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function generateSimple() {
+            updateProgress(30, 'Starting generation...');
+            addLog('Starting simple project generation...');
+            
+            try {
+                updateProgress(60, 'Calling API...');
+                const response = await fetch('http://localhost:5000/api/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        domain: 'industrial',
+                        mcu: 'riscv',
+                        latency: 20
+                    })
+                });
+                
+                updateProgress(90, 'Processing response...');
+                const data = await response.json();
+                
+                updateProgress(100, '✅ Project created!');
+                addLog(`✅ Project created: ${data.project_id}`, 'success');
+                
+                result.innerHTML = `
+                    <h3>🎉 Success!</h3>
+                    <p><strong>Project ID:</strong> ${data.project_id}</p>
+                    <p><strong>Files:</strong> ${data.files.join(', ')}</p>
+                    <p><a href="http://localhost:5000/api/download/${data.project_id}" target="_blank">
+                        📥 Download Project
+                    </a></p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                updateProgress(0, '❌ Error');
+                addLog(`❌ Generation failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function generateStrict() {
+            updateProgress(10, 'Collecting specs...');
+            addLog('Starting STRICT generation...');
+            
+            const specs = {
+                domain: document.getElementById('domain')?.value || 'industrial',
+                mcu: document.getElementById('mcu')?.value || 'riscv',
+                latency: 20,
+                memory: 64,
+                power: 50
+            };
+            
+            addLog(`Specs: ${JSON.stringify(specs)}`);
+            
+            try {
+                updateProgress(30, 'Processing specifications...');
+                addLog('Processing specifications with API...');
+                
+                const processResponse = await fetch('http://localhost:5000/api/specs/process', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(specs)
+                });
+                
+                updateProgress(50, 'Generating design...');
+                addLog('Generating STRICT design...');
+                
+                const generateResponse = await fetch('http://localhost:5000/api/generate/strict', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(specs)
+                });
+                
+                updateProgress(80, 'Processing results...');
+                const data = await generateResponse.json();
+                
+                updateProgress(100, '✅ STRICT Project created!');
+                addLog(`✅ STRICT Project created: ${data.project_id}`, 'success');
+                
+                result.innerHTML = `
+                    <h3>🎉 STRICT COMPLIANCE SUCCESS!</h3>
+                    <p><strong>Project ID:</strong> ${data.project_id}</p>
+                    <p><strong>Type:</strong> ${data.strict_compliance ? 'STRICT' : 'Normal'}</p>
+                    <p><strong>Files:</strong> ${data.files.join(', ')}</p>
+                    <p><strong>Requirements met:</strong> 
+                        ${data.requirements ? 'HW-SW ✓ Explainable ✓ Meta-Learning ✓' : 'All ✓'}
+                    </p>
+                    <p><a href="http://localhost:5000/api/download/${data.project_id}" target="_blank">
+                        📥 Download Project ZIP
+                    </a></p>
+                    <button class="btn" onclick="listProjects()" style="background: #FF9800;">
+                        📋 List All Projects
+                    </button>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                updateProgress(0, '❌ Error');
+                addLog(`❌ STRICT generation failed: ${error.message}`, 'error');
+                result.innerHTML = `<p style="color: red"><strong>Error:</strong> ${error.message}</p>`;
+            }
+        }
+        
+        async function listProjects() {
+            try {
+                const response = await fetch('http://localhost:5000/api/projects');
+                const data = await response.json();
+                
+                let projectsHtml = '<h4>Recent Projects:</h4><ul>';
+                data.projects.forEach(proj => {
+                    projectsHtml += `<li>${proj.id} (${proj.type}) - ${proj.created}</li>`;
+                });
+                projectsHtml += '</ul>';
+                
+                result.innerHTML += projectsHtml;
+            } catch (error) {
+                addLog(`❌ Failed to list projects: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test au chargement
+        window.onload = testHealth;
+    </script>
+</body>
+</html>

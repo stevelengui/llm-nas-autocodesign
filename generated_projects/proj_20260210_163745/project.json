@@ -1,0 +1,15 @@
+{
+  "id": "proj_20260210_163745",
+  "specifications": {
+    "domain": "medical"
+  },
+  "metrics": {
+    "latency_ms": 14.0,
+    "memory_kb": 48.0,
+    "power_mw": 40.0,
+    "accuracy": 0.92,
+    "optimization_score": 0.88,
+    "thermal_margin_c": 15.5
+  },
+  "generated_at": "2026-02-10T16:37:45.335207"
+}

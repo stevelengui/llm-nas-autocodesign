@@ -1,0 +1,31 @@
+{
+  "project_domain": "medical",
+  "architecture_decisions": [
+    {
+      "decision": "mcu_selection",
+      "selected": "riscv",
+      "rationale": "Optimal for medical domain requirements",
+      "alternatives": [
+        "riscv",
+        "stm32",
+        "esp32",
+        "custom"
+      ],
+      "timestamp": "2026-02-21T21:28:18.654715"
+    },
+    {
+      "decision": "model_selection",
+      "selected": "qnn_snn_hybrid",
+      "rationale": "Combines spatial (QNN) and temporal (SNN) processing",
+      "performance": {
+        "accuracy": 0.94,
+        "latency_ms": 8.4
+      }
+    }
+  ],
+  "compliance_verification": {
+    "hw_sw_codesign": true,
+    "explainable_model": true,
+    "meta_learning": true
+  }
+}

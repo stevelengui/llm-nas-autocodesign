@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LLM-NAS - Metrics Vary</title>
+    <style>
+        body { font-family: Arial; margin: 40px; background: #f0f2f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #2563eb; }
+        .form-group { margin: 20px 0; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        select, input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #1d4ed8; }
+        .result { margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 8px; }
+        .metric { display: inline-block; margin: 10px; padding: 15px; background: white; border-radius: 6px; min-width: 120px; text-align: center; }
+        .metric .value { font-size: 24px; font-weight: bold; color: #2563eb; }
+        .log { margin-top: 20px; padding: 15px; background: #1f2937; color: white; border-radius: 6px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 LLM-NAS AutoCoDesign</h1>
+        <p>Generate projects with <strong>VARYING</strong> metrics based on domain and MCU</p>
+        
+        <div class="form-group">
+            <label>Domain</label>
+            <select id="domain">
+                <option value="medical">🏥 Medical (high accuracy, slower)</option>
+                <option value="iot">🌐 IoT (low power, less memory)</option>
+                <option value="industrial" selected>🏭 Industrial (balanced)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>MCU</label>
+            <select id="mcu">
+                <option value="riscv">RISC-V (fast with RV32X)</option>
+                <option value="stm32">STM32 (standard)</option>
+                <option value="esp32">ESP32 (WiFi, more power)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Latency Target: <span id="latVal">20</span> ms</label>
+            <input type="range" id="latency" min="1" max="100" value="20">
+        </div>
+        
+        <div class="form-group">
+            <label>Memory Target: <span id="memVal">64</span> KB</label>
+            <input type="range" id="memory" min="8" max="256" value="64" step="8">
+        </div>
+        
+        <div class="form-group">
+            <label>Power Target: <span id="pwrVal">50</span> mW</label>
+            <input type="range" id="power" min="10" max="200" value="50" step="5">
+        </div>
+        
+        <button onclick="generate()">Generate Project</button>
+        
+        <div class="result" id="result" style="display: none;">
+            <h3>Results (Vary by Domain/MCU):</h3>
+            <div id="metrics"></div>
+            <p id="message"></p>
+        </div>
+        
+        <div class="log" id="log">
+            [System] Ready - Metrics will vary based on your selections
+        </div>
+    </div>
+    
+    <script>
+        // Update slider values
+        document.getElementById('latency').oninput = function() {
+            document.getElementById('latVal').textContent = this.value;
+        }
+        document.getElementById('memory').oninput = function() {
+            document.getElementById('memVal').textContent = this.value;
+        }
+        document.getElementById('power').oninput = function() {
+            document.getElementById('pwrVal').textContent = this.value;
+        }
+        
+        async function generate() {
+            const config = {
+                domain: document.getElementById('domain').value,
+                mcu: document.getElementById('mcu').value,
+                latency: parseInt(document.getElementById('latency').value),
+                memory: parseInt(document.getElementById('memory').value),
+                power: parseInt(document.getElementById('power').value)
+            };
+            
+            log(`Generating for: ${config.domain} domain, ${config.mcu} MCU`);
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(config)
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    displayMetrics(data.metrics);
+                    document.getElementById('message').textContent = data.message;
+                    document.getElementById('result').style.display = 'block';
+                    log(`✅ Generated: ${data.project_id}`);
+                    log(`   Latency: ${data.metrics.latency_ms}ms (target: ${config.latency}ms)`);
+                    log(`   Memory: ${data.metrics.memory_kb}KB (target: ${config.memory}KB)`);
+                    log(`   Power: ${data.metrics.power_mw}mW (target: ${config.power}mW)`);
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+        
+        function displayMetrics(metrics) {
+            const container = document.getElementById('metrics');
+            container.innerHTML = '';
+            
+            const items = [
+                {label: 'Latency', value: `${metrics.latency_ms} ms`, color: '#2563eb'},
+                {label: 'Memory', value: `${metrics.memory_kb} KB`, color: '#10b981'},
+                {label: 'Power', value: `${metrics.power_mw} mW`, color: '#f59e0b'},
+                {label: 'Accuracy', value: `${(metrics.accuracy * 100).toFixed(1)}%`, color: '#8b5cf6'},
+                {label: 'Score', value: `${(metrics.optimization_score * 100).toFixed(1)}%`, color: '#ec4899'}
+            ];
+            
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'metric';
+                div.innerHTML = `
+                    <div class="value" style="color: ${item.color}">${item.value}</div>
+                    <div>${item.label}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        function log(msg) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<br>[${time}] ${msg}`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        // Test different configurations on load
+        setTimeout(async () => {
+            log("Testing different configurations...");
+            try {
+                const response = await fetch('http://localhost:5000/api/test');
+                const data = await response.json();
+                log(`✅ Backend ready - metrics vary by domain/MCU`);
+            } catch {
+                log("⚠️ Start backend first: python backend/app.py");
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
