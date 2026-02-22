@@ -1,4 +1,0 @@
-  File "/home/stevenew/LLMNAS_Corrected/backend/app_real.py", line 593
-    readme_code = f"""# LLM-NAS AutoCoDesign - REAL QSNN Hybrid Project
-                  ^
-SyntaxError: unterminated triple-quoted string literal (detected at line 609)

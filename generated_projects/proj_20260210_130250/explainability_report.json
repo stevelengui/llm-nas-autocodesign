@@ -1,9 +1,0 @@
-{
-  "project_id": "proj_20260210_130250",
-  "decisions": [
-    "architecture",
-    "optimization",
-    "deployment"
-  ],
-  "compliance": "STRICT"
-}

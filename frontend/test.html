@@ -1,7 +1,0 @@
-<h1>LLM-NAS TEST</h1>
-<div id="status"></div>
-<script>
-fetch('http://localhost:61000/api/health')
-  .then(r => r.json())
-  .then(d => document.getElementById('status').innerHTML = '✅ ' + JSON.stringify(d));
-</script>
