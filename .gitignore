@@ -7,3 +7,4 @@ logs/*.log
 *.zip
 .vscode/
 .DS_Store
+*.bak
